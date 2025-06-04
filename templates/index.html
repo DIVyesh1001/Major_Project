@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-powered image captioning tool - generate descriptive captions for any image">
+    <title>AI Caption Generator | Image Captioning Tool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3a86ff;
+            --primary-dark: #2667cc;
+            --secondary: #ff006e;
+            --text: #333;
+            --light-gray: #f5f7fa;
+            --gray: #ddd;
+            --success: #4caf50;
+            --white: #fff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --radius: 8px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text);
+            background-color: var(--light-gray);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0 30px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        .tagline {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            background-color: var(--white);
+            border-radius: var(--radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+        
+        @media (min-width: 768px) {
+            .app-container {
+                flex-direction: row;
+            }
+        }
+        
+        .upload-section, .result-section {
+            flex: 1;
+        }
+        
+        .upload-container {
+            border: 2px dashed var(--gray);
+            border-radius: var(--radius);
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            background-color: var(--light-gray);
+            margin-bottom: 20px;
+        }
+        
+        .upload-container:hover {
+            border-color: var(--primary);
+        }
+        
+        .upload-container.drag-over {
+            background-color: rgba(58, 134, 255, 0.1);
+            border-color: var(--primary);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        .upload-text {
+            margin-bottom: 15px;
+        }
+        
+        .upload-container input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .preview-container {
+            position: relative;
+            margin: 20px 0;
+            max-width: 100%;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            display: none;
+        }
+        
+        #imagePreview {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .clear-preview {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .clear-preview:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+        
+        .submit-btn {
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .submit-btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .submit-btn:disabled {
+            background-color: var(--gray);
+            cursor: not-allowed;
+        }
+        
+        .result-section {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .result-header {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+        
+        .caption-container {
+            background-color: var(--light-gray);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 15px;
+            min-height: 120px;
+        }
+        
+        .caption {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        
+        .caption-container.loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: var(--radius);
+            border: 1px solid var(--gray);
+            background: var(--white);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        
+        .action-btn:hover {
+            background: var(--light-gray);
+        }
+        
+        .history-section {
+            margin-top: 30px;
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .clear-btn {
+            padding: 5px 10px;
+            font-size: 0.9rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--gray);
+            background: var(--white);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .clear-btn:hover {
+            background: var(--light-gray);
+        }
+        
+        .history-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .history-item {
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .history-item:hover {
+            transform: translateY(-5px);
+        }
+        
+        .history-img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+        
+        .history-caption {
+            padding: 10px;
+            font-size: 0.9rem;
+            background: var(--white);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .loader {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--white);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #777;
+            font-size: 0.9rem;
+        }
+        
+        .example-images {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .example-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .example-image:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Image Captioning using LSTM Deep Learning</h1>
+            <p class="tagline">Generate accurate and creative captions for your images in seconds</p>
+        </header>
+        
+        <div class="app-container">
+            <div class="upload-section">
+                <h2>Upload Your Image</h2>
+                <div id="uploadContainer" class="upload-container">
+                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                    <div class="upload-text">
+                        <p>Drag & drop your image here or click to browse</p>
+                        <p style="font-size: 0.9rem; color: #666;">Supports JPG, PNG, WebP (Max: 10MB)</p>
+                    </div>
+                    <input type="file" name="image" id="imageInput" accept="image/*">
+                </div>
+                
+                <div id="previewContainer" class="preview-container">
+                    <img id="imagePreview" src="#" alt="Preview">
+                    <button id="clearPreview" class="clear-preview" title="Remove image">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <button id="generateBtn" class="submit-btn" disabled>
+                    <i class="fas fa-magic"></i> Generate Caption
+                </button>
+                
+                <!-- <div class="example-container">
+                    <p style="margin-top: 20px; font-size: 0.9rem;">Or try with an example:</p>
+                    <div class="example-images">
+                        <img src="{{ url_for('static', filename='examples/1.jpg') }}" alt="Example 1" class="example-image">
+                        <img src="{{ url_for('static', filename='examples/2.png') }}" alt="Example 2" class="example-image">
+                        <img src="{{ url_for('static', filename='examples/3.png') }}" alt="Example 3" class="example-image">
+                    </div>
+                </div> -->
+            </div>
+            
+            <div class="result-section">
+                <h2 class="result-header">Generated Caption</h2>
+                <div id="captionContainer" class="caption-container">
+                    <p class="caption">Your caption will appear here after image processing.</p>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="action-btn" id="copyBtn">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                    <button class="action-btn" id="downloadBtn">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                    <button class="action-btn" id="shareBtn">
+                        <i class="fas fa-share-alt"></i> Share
+                    </button>
+                </div>
+                
+                <div class="history-section">
+                    <div class="history-header">
+                        <h3>Recent Captions</h3>
+                        <button class="clear-btn" id="clearHistoryBtn">
+                            <i class="fas fa-trash"></i> Clear
+                        </button>
+                    </div>
+                    <div class="history-list" id="historyList">
+                        <!-- History items will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>© 2025 AI Caption Generator | Privacy Policy | Terms of Service</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadContainer = document.getElementById('uploadContainer');
+            const imageInput = document.getElementById('imageInput');
+            const imagePreview = document.getElementById('imagePreview');
+            const previewContainer = document.getElementById('previewContainer');
+            const clearPreviewBtn = document.getElementById('clearPreview');
+            const generateBtn = document.getElementById('generateBtn');
+            const captionContainer = document.getElementById('captionContainer');
+            const copyBtn = document.getElementById('copyBtn');
+            const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+            const exampleImages = document.querySelectorAll('.example-image');
+            const historyList = document.getElementById('historyList');
+            
+            // Handle drag and drop functionality
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                uploadContainer.classList.add('drag-over');
+            }
+            
+            function unhighlight() {
+                uploadContainer.classList.remove('drag-over');
+            }
+            
+            uploadContainer.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files.length) {
+                    handleFiles(files);
+                }
+            }
+            
+            // Handle file selection
+            imageInput.addEventListener('change', function() {
+                handleFiles(this.files);
+            });
+            
+            function handleFiles(files) {
+                if (files && files[0]) {
+                    const file = files[0];
+                    
+                    // Check file type
+                    if (!file.type.match('image.*')) {
+                        alert('Please select an image file (JPG, PNG, WebP)');
+                        return;
+                    }
+                    
+                    // Check file size (max 10MB)
+                    if (file.size > 10 * 1024 * 1024) {
+                        alert('File size exceeds 10MB limit');
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        previewContainer.style.display = 'block';
+                        generateBtn.disabled = false;
+                    }
+                    reader.readAsDataURL(file);
+                }
+            }
+            
+            // Clear preview image
+            clearPreviewBtn.addEventListener('click', function() {
+                imagePreview.src = '#';
+                previewContainer.style.display = 'none';
+                imageInput.value = '';
+                generateBtn.disabled = true;
+            });
+
+
+            //mock result 
+            // // Caption generation
+            // generateBtn.addEventListener('click', function() {
+            //     // Show loading state
+            //     captionContainer.innerHTML = '<div class="loader"></div>';
+            //     captionContainer.classList.add('loading');
+            //     generateBtn.disabled = true;
+                
+            //     // Simulate API call with timeout (replace with actual API call)
+            //     setTimeout(() => {
+            //         generateCaption();
+            //     }, 1500);
+            // });
+            
+            // function generateCaption() {
+            //     const caption = "A serene sunset over calm ocean waters, with silhouettes of palm trees and mountains in the distance creating a dramatic skyline.";
+                
+            //     // Show caption result
+            //     captionContainer.innerHTML = `<p class="caption">${caption}</p>`;
+            //     captionContainer.classList.remove('loading');
+            //     generateBtn.disabled = false;
+                
+            //     // Add to history
+            //     addToHistory(imagePreview.src, caption);
+            // }
+            //
+
+
+            // Caption generation
+            generateBtn.addEventListener('click', function() {
+                // Show loading state
+                captionContainer.innerHTML = '<div class="loader"></div>';
+                captionContainer.classList.add('loading');
+                generateBtn.disabled = true;
+                
+                // Create FormData and add the file
+                const formData = new FormData();
+                
+                // Get file from the input
+                const fileInput = document.getElementById('imageInput');
+                if (fileInput.files && fileInput.files[0]) {
+                    formData.append('image', fileInput.files[0]);
+                    
+                    // Send AJAX request
+                    fetch('/', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Show caption result
+                            captionContainer.innerHTML = `<p class="caption">${data.caption}</p>`;
+                            
+                            // Add to history
+                            addToHistory(imagePreview.src, data.caption);
+                        } else {
+                            // Show error
+                            captionContainer.innerHTML = `<p class="caption error">Error: ${data.error}</p>`;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        captionContainer.innerHTML = `<p class="caption error">Error generating caption. Please try again.</p>`;
+                    })
+                    .finally(() => {
+                        captionContainer.classList.remove('loading');
+                        generateBtn.disabled = false;
+                    });
+                } else {
+                    captionContainer.innerHTML = `<p class="caption error">Please select an image first.</p>`;
+                    captionContainer.classList.remove('loading');
+                    generateBtn.disabled = true;
+                }
+            });
+
+            // Example images
+            exampleImages.forEach((img, index) => {
+                img.addEventListener('click', function() {
+                    // Set the example image as current image
+                    imagePreview.src = this.src;
+                    previewContainer.style.display = 'block';
+                    generateBtn.disabled = false;
+                });
+            });
+            
+            // Copy button
+            copyBtn.addEventListener('click', function() {
+                const caption = document.querySelector('.caption');
+                if (caption) {
+                    navigator.clipboard.writeText(caption.textContent)
+                        .then(() => {
+                            const originalText = this.innerHTML;
+                            this.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                            setTimeout(() => {
+                                this.innerHTML = originalText;
+                            }, 2000);
+                        })
+                        .catch(err => {
+                            console.error('Failed to copy: ', err);
+                        });
+                }
+            });
+
+            // Find the existing event listener setup section and add these implementations
+
+            // Download button
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.addEventListener('click', function() {
+                const caption = document.querySelector('.caption');
+                if (caption) {
+                    // Create a Blob with the caption text
+                    const blob = new Blob([caption.textContent], {type: 'text/plain'});
+                    const url = URL.createObjectURL(blob);
+                    
+                    // Create a temporary anchor element to trigger download
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'caption-' + new Date().getTime() + '.txt';
+                    document.body.appendChild(a);
+                    a.click();
+                    
+                    // Clean up
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        
+                        // Show success feedback
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<i class="fas fa-check"></i> Downloaded!';
+                        setTimeout(() => {
+                            this.innerHTML = originalText;
+                        }, 2000);
+                    }, 0);
+                }
+            });
+
+            // Share button
+            const shareBtn = document.getElementById('shareBtn');
+            shareBtn.addEventListener('click', function() {
+                const caption = document.querySelector('.caption');
+                const imageUrl = document.getElementById('imagePreview').src;
+                
+                if (caption) {
+                    // Check if Web Share API is supported
+                    if (navigator.share) {
+                        navigator.share({
+                            title: 'AI Generated Caption',
+                            text: caption.textContent,
+                            // Note: We can't share local file URLs, so we're just sharing the text
+                        })
+                        .then(() => {
+                            // Show success feedback
+                            const originalText = this.innerHTML;
+                            this.innerHTML = '<i class="fas fa-check"></i> Shared!';
+                            setTimeout(() => {
+                                this.innerHTML = originalText;
+                            }, 2000);
+                        })
+                        .catch(err => {
+                            console.error('Share failed:', err);
+                            fallbackShare(caption.textContent);
+                        });
+                    } else {
+                        // Fallback for browsers that don't support Web Share API
+                        fallbackShare(caption.textContent);
+                    }
+                }
+            });
+
+            // Fallback share function for browsers without Web Share API
+            function fallbackShare(text) {
+                // Create a temporary input to copy text
+                const input = document.createElement('textarea');
+                input.value = text;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+                
+                // Notify user
+                alert('Caption copied to clipboard! You can now paste it in your preferred sharing app.');
+                
+                // Update button state temporarily
+                const originalText = shareBtn.innerHTML;
+                shareBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => {
+                    shareBtn.innerHTML = originalText;
+                }, 2000);
+            }
+            
+            // Clear history button
+            clearHistoryBtn.addEventListener('click', function() {
+                historyList.innerHTML = '';
+            });
+            
+            // History management
+            function addToHistory(imageSrc, caption) {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.innerHTML = `
+                    <img src="${imageSrc}" alt="History image" class="history-img">
+                    <div class="history-caption">${caption}</div>
+                `;
+                
+                historyItem.addEventListener('click', function() {
+                    imagePreview.src = imageSrc;
+                    previewContainer.style.display = 'block';
+                    captionContainer.innerHTML = `<p class="caption">${caption}</p>`;
+                    generateBtn.disabled = false;
+                });
+                
+                // Add to the beginning of the list
+                if (historyList.firstChild) {
+                    historyList.insertBefore(historyItem, historyList.firstChild);
+                } else {
+                    historyList.appendChild(historyItem);
+                }
+                
+                // Limit history items
+                if (historyList.children.length > 6) {
+                    historyList.removeChild(historyList.lastChild);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
